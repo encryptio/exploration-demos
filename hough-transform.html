@@ -2,16 +2,16 @@
 <html>
 <body>
 
-<canvas id="drawfag" width=500 height=500></canvas>
-<canvas id="showfag" width=500 height=500></canvas>
+<canvas id="drawcanvas" width=500 height=500></canvas>
+<canvas id="showcanvas" width=500 height=500></canvas>
 
 <script>
 
-var drawfag = document.getElementById("drawfag");
-var showfag = document.getElementById("showfag");
+var drawcanvas = document.getElementById("drawcanvas");
+var showcanvas = document.getElementById("showcanvas");
 
-var drawctx = drawfag.getContext("2d");
-var showctx = showfag.getContext("2d");
+var drawctx = drawcanvas.getContext("2d");
+var showctx = showcanvas.getContext("2d");
 
 var wid = 50;
 var hei = 50;
@@ -21,7 +21,7 @@ var hough;
 var overlay_coords = null;
 var curve_overlay  = null;
 var mouse_button_is_down = false;
-var mouse_is_in_drawfag = false;
+var mouse_is_in_drawcanvas = false;
 
 function clear_values() {
     draw = [];
@@ -79,10 +79,10 @@ function hough_point_to_line_endpoints(x,y) {
     return [pt_x-d_x, pt_y-d_y, pt_x+d_x, pt_y+d_y];
 }
 
-function update_drawfag() {
-    //drawctx.clearRect(0,0,drawfag.width,drawfag.height);
-    var boxw = drawfag.width  / wid;
-    var boxh = drawfag.height / hei;
+function update_drawcanvas() {
+    //drawctx.clearRect(0,0,drawcanvas.width,drawcanvas.height);
+    var boxw = drawcanvas.width  / wid;
+    var boxh = drawcanvas.height / hei;
 
     for (var x = 0; x < wid; x++)
         for (var y = 0; y < hei; y++) {
@@ -101,9 +101,9 @@ function update_drawfag() {
     }
 }
 
-function update_showfag() {
-    var boxw = showfag.width  / wid;
-    var boxh = showfag.height / hei;
+function update_showcanvas() {
+    var boxw = showcanvas.width  / wid;
+    var boxh = showcanvas.height / hei;
 
     for (var x = 0; x < wid; x++)
         for (var y = 0; y < hei; y++) {
@@ -149,21 +149,21 @@ function get_event_coordinates(evt) {
 }
 
 function check_click(evt) {
-    if ( mouse_button_is_down && mouse_is_in_drawfag ) {
+    if ( mouse_button_is_down && mouse_is_in_drawcanvas ) {
         var scr_coord = get_event_coordinates(evt);
-        var nx = scr_coord[0] / drawfag.width  * wid;
-        var ny = scr_coord[1] / drawfag.height * hei;
+        var nx = scr_coord[0] / drawcanvas.width  * wid;
+        var ny = scr_coord[1] / drawcanvas.height * hei;
 
         nx = Math.floor(nx);
         ny = Math.floor(ny);
 
-        mark_drawfag(nx, ny);
+        mark_drawcanvas(nx, ny);
 
         evt.preventDefault();
     }
 }
 
-function mark_drawfag(nx, ny) {
+function mark_drawcanvas(nx, ny) {
     if ( draw[nx][ny] == 0 ) {
         draw[nx][ny] = 1;
         console.log("draw["+nx+"]["+ny+"] = 1");
@@ -176,67 +176,67 @@ function mark_drawfag(nx, ny) {
                 hough[hx][hy] += 1;
         }
 
-        update_drawfag();
-        update_showfag();
+        update_drawcanvas();
+        update_showcanvas();
     }
 }
 
 function set_curve_overlay(evt) {
     var scr_coord = get_event_coordinates(evt);
-    var nx = scr_coord[0] / drawfag.width  * wid;
-    var ny = scr_coord[1] / drawfag.height * hei;
+    var nx = scr_coord[0] / drawcanvas.width  * wid;
+    var ny = scr_coord[1] / drawcanvas.height * hei;
 
     nx = Math.floor(nx);
     ny = Math.floor(ny);
 
     curve_overlay = hough_points(nx,ny);
 
-    update_showfag();
+    update_showcanvas();
 }
 
 function unset_curve_overlay(evt) {
     curve_overlay = null;
 
-    update_showfag();
+    update_showcanvas();
 }
 
 function set_line_overlay(evt) {
     var scr_coord = get_event_coordinates(evt);
-    var nx = scr_coord[0] / drawfag.width  * wid;
-    var ny = scr_coord[1] / drawfag.height * hei;
+    var nx = scr_coord[0] / drawcanvas.width  * wid;
+    var ny = scr_coord[1] / drawcanvas.height * hei;
 
     nx = Math.floor(nx);
     ny = Math.floor(ny);
 
     overlay_coords = hough_point_to_line_endpoints(nx,ny);
 
-    update_drawfag();
+    update_drawcanvas();
 }
 
 function unset_line_overlay(evt) {
     overlay_coords = null;
 
-    update_drawfag();
+    update_drawcanvas();
 }
 
 clear_values();
-update_drawfag();
-update_showfag();
+update_drawcanvas();
+update_showcanvas();
 
-drawfag.addEventListener('mouseout', function (e) {
-        mouse_is_in_drawfag = false;
+drawcanvas.addEventListener('mouseout', function (e) {
+        mouse_is_in_drawcanvas = false;
         unset_curve_overlay(e);
     }, false);
-drawfag.addEventListener('mousemove', function (e) {
-        mouse_is_in_drawfag = true;
+drawcanvas.addEventListener('mousemove', function (e) {
+        mouse_is_in_drawcanvas = true;
         set_curve_overlay(e);
         check_click(e);
     }, false);
 
-showfag.addEventListener('mouseout', function (e) {
+showcanvas.addEventListener('mouseout', function (e) {
         unset_line_overlay(e);
     }, false);
-showfag.addEventListener('mousemove', function (e) {
+showcanvas.addEventListener('mousemove', function (e) {
         set_line_overlay(e);
     }, false);
 
