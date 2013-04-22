@@ -46,10 +46,10 @@ function hough_points(x,y) {
         dist /= Math.sqrt( (wid/2)*(wid/2) + (hei/2)*(hei/2) );
         dist *= hei/2;
         dist += hei/2;
-        
+
         theta /= 3.14159265;
         theta *= wid;
-        
+
         pts.push([theta,dist]);
     }
     return pts;
@@ -60,7 +60,7 @@ function hough_point_to_line_endpoints(x,y) {
     dist -= hei/2;
     dist /= hei/2;
     dist *= Math.sqrt( (wid/2)*(wid/2) + (hei/2)*(hei/2) );
-    
+
     var theta = x;
     theta /= wid;
     theta *= 3.14159265;
@@ -82,7 +82,7 @@ function update_drawfag() {
     //drawctx.clearRect(0,0,drawfag.width,drawfag.height);
     var boxw = drawfag.width  / wid;
     var boxh = drawfag.height / hei;
-    
+
     for (var x = 0; x < wid; x++)
         for (var y = 0; y < hei; y++) {
             drawctx.fillStyle = (draw[x][y] == 0 ? '#000' : '#fff');
@@ -92,7 +92,7 @@ function update_drawfag() {
     if ( overlay_coords ) {
         drawctx.strokeStyle = '#aa0';
         drawctx.lineWidth = (boxw+boxh)/6.0;
-        
+
         drawctx.beginPath();
         drawctx.moveTo((overlay_coords[0]+0.5)*boxw, (overlay_coords[1]+0.5)*boxh);
         drawctx.lineTo((overlay_coords[2]+0.5)*boxw, (overlay_coords[3]+0.5)*boxh);
@@ -103,7 +103,7 @@ function update_drawfag() {
 function update_showfag() {
     var boxw = showfag.width  / wid;
     var boxh = showfag.height / hei;
-    
+
     for (var x = 0; x < wid; x++)
         for (var y = 0; y < hei; y++) {
             var r = Math.sin( hough[x][y] / 3 ) * 127 + 127;
