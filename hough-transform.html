@@ -166,7 +166,6 @@ function check_click(evt) {
 function mark_drawcanvas(nx, ny) {
     if ( draw[nx][ny] == 0 ) {
         draw[nx][ny] = 1;
-        console.log("draw["+nx+"]["+ny+"] = 1");
 
         var pts = hough_points(nx,ny);
         for (var i in pts) {
