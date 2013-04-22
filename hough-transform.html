@@ -1,0 +1,227 @@
+<!DOCTYPE HTML>
+<html>
+<body>
+
+<canvas id="drawfag" width=500 height=500></canvas>
+<canvas id="showfag" width=500 height=500></canvas>
+
+<script>
+
+var drawfag = document.getElementById("drawfag");
+var showfag = document.getElementById("showfag");
+
+var drawctx = drawfag.getContext("2d");
+var showctx = showfag.getContext("2d");
+
+var wid = 50;
+var hei = 50;
+
+var draw;
+var hough;
+var overlay_coords = null;
+var curve_overlay  = null;
+
+function clear_values() {
+    draw = [];
+    hough = [];
+    for (var x = 0; x < wid; x++) {
+        var row = [];
+        for (var y = 0; y < hei; y++)
+            row.push(0);
+        draw.push(row);
+
+        row = [];
+        for (var y = 0; y < hei; y++)
+            row.push(0);
+        hough.push(row);
+    }
+}
+
+function hough_points(x,y) {
+    var pts = [];
+    for (var r = 0; r < wid; r++) {
+        var theta = r/wid*3.14159265;
+        var dist = (x-wid/2)*Math.cos(theta) + (y-hei/2)*Math.sin(theta);
+        dist /= Math.sqrt( (wid/2)*(wid/2) + (hei/2)*(hei/2) );
+        dist *= hei/2;
+        dist += hei/2;
+        
+        theta /= 3.14159265;
+        theta *= wid;
+        
+        pts.push([theta,dist]);
+    }
+    return pts;
+}
+
+function hough_point_to_line_endpoints(x,y) {
+    var dist = y;
+    dist -= hei/2;
+    dist /= hei/2;
+    dist *= Math.sqrt( (wid/2)*(wid/2) + (hei/2)*(hei/2) );
+    
+    var theta = x;
+    theta /= wid;
+    theta *= 3.14159265;
+
+    var pt_x = Math.cos(theta) * dist + wid/2;
+    var pt_y = Math.sin(theta) * dist + hei/2;
+    var d_x = Math.cos(theta + 3.14159265/2);
+    var d_y = Math.sin(theta + 3.14159265/2);
+
+    while ( Math.abs(d_x) < wid/2 || Math.abs(d_y) < hei/2 ) {
+        d_x *= 1.5;
+        d_y *= 1.5;
+    }
+
+    return [pt_x-d_x, pt_y-d_y, pt_x+d_x, pt_y+d_y];
+}
+
+function update_drawfag() {
+    //drawctx.clearRect(0,0,drawfag.width,drawfag.height);
+    var boxw = drawfag.width  / wid;
+    var boxh = drawfag.height / hei;
+    
+    for (var x = 0; x < wid; x++)
+        for (var y = 0; y < hei; y++) {
+            drawctx.fillStyle = (draw[x][y] == 0 ? '#000' : '#fff');
+            drawctx.fillRect(x*boxw, y*boxh, boxw, boxh);
+        }
+
+    if ( overlay_coords ) {
+        drawctx.strokeStyle = '#aa0';
+        drawctx.lineWidth = (boxw+boxh)/6.0;
+        
+        drawctx.beginPath();
+        drawctx.moveTo((overlay_coords[0]+0.5)*boxw, (overlay_coords[1]+0.5)*boxh);
+        drawctx.lineTo((overlay_coords[2]+0.5)*boxw, (overlay_coords[3]+0.5)*boxh);
+        drawctx.stroke();
+    }
+}
+
+function update_showfag() {
+    var boxw = showfag.width  / wid;
+    var boxh = showfag.height / hei;
+    
+    for (var x = 0; x < wid; x++)
+        for (var y = 0; y < hei; y++) {
+            var r = Math.sin( hough[x][y] / 3 ) * 127 + 127;
+            var g = Math.sin( hough[x][y] / 6 ) * 127 + 127;
+            var b = Math.sin( hough[x][y] / 9 ) * 127 + 127;
+
+            r = Math.round(r > 255 ? 255 : r < 0 ? 0 : r);
+            g = Math.round(g > 255 ? 255 : g < 0 ? 0 : g);
+            b = Math.round(b > 255 ? 255 : b < 0 ? 0 : b);
+
+
+            showctx.fillStyle = 'rgb('+r+','+g+','+b+')';
+            showctx.fillRect(x*boxw, y*boxh, boxw, boxh);
+        }
+
+    if ( curve_overlay ) {
+        showctx.strokeStyle = '#aa0';
+        showctx.lineWidth = (boxw+boxh)/6.0;
+
+        showctx.beginPath();
+        for (var i in curve_overlay) {
+            var x = (curve_overlay[i][0] + 0.5) * boxw;
+            var y = (curve_overlay[i][1] + 0.5) * boxh;
+            if ( i == 0 ) {
+                showctx.moveTo(x,y);
+            } else {
+                showctx.lineTo(x,y);
+            }
+        }
+        showctx.stroke();
+    }
+}
+
+function get_event_coordinates(evt) {
+    if ( evt.offsetX ) {
+        return [evt.offsetX, evt.offsetY];
+    } else if ( evt.layerX ) {
+        return [evt.layerX, evt.layerY];
+    } else {
+        throw "Can't get event coordinates for "+evt;
+    }
+}
+
+function click_drawfag(evt) {
+    var scr_coord = get_event_coordinates(evt);
+    var nx = scr_coord[0] / drawfag.width  * wid;
+    var ny = scr_coord[1] / drawfag.height * hei;
+
+    nx = Math.floor(nx);
+    ny = Math.floor(ny);
+
+    if ( draw[nx][ny] == 0 ) {
+        draw[nx][ny] = 1;
+        console.log("draw["+nx+"]["+ny+"] = 1");
+
+        var pts = hough_points(nx,ny);
+        for (var i in pts) {
+            var hx = Math.round(pts[i][0]);
+            var hy = Math.round(pts[i][1]);
+            if ( hx >= 0 && hy >= 0 && hx < wid && hy < hei )
+                hough[hx][hy] += 1;
+        }
+
+        update_drawfag();
+        update_showfag();
+    }
+    
+    evt.preventDefault();
+}
+
+function set_curve_overlay(evt) {
+    var scr_coord = get_event_coordinates(evt);
+    var nx = scr_coord[0] / drawfag.width  * wid;
+    var ny = scr_coord[1] / drawfag.height * hei;
+
+    nx = Math.floor(nx);
+    ny = Math.floor(ny);
+
+    curve_overlay = hough_points(nx,ny);
+
+    update_showfag();
+}
+
+function unset_curve_overlay(evt) {
+    curve_overlay = null;
+
+    update_showfag();
+}
+
+function set_line_overlay(evt) {
+    var scr_coord = get_event_coordinates(evt);
+    var nx = scr_coord[0] / drawfag.width  * wid;
+    var ny = scr_coord[1] / drawfag.height * hei;
+
+    nx = Math.floor(nx);
+    ny = Math.floor(ny);
+
+    overlay_coords = hough_point_to_line_endpoints(nx,ny);
+
+    update_drawfag();
+}
+
+function unset_line_overlay(evt) {
+    overlay_coords = null;
+
+    update_drawfag();
+}
+
+clear_values();
+update_drawfag();
+update_showfag();
+
+drawfag.addEventListener('click', click_drawfag, false);
+drawfag.addEventListener('mouseout', unset_curve_overlay, false);
+drawfag.addEventListener('mousemove', set_curve_overlay, false);
+showfag.addEventListener('mouseout', unset_line_overlay, false);
+showfag.addEventListener('mousemove', set_line_overlay, false);
+
+</script>
+
+</body>
+</html>
