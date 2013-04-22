@@ -20,6 +20,7 @@ var draw;
 var hough;
 var overlay_coords = null;
 var curve_overlay  = null;
+var mouse_button_is_down = false;
 
 function clear_values() {
     draw = [];
@@ -146,14 +147,22 @@ function get_event_coordinates(evt) {
     }
 }
 
-function click_drawfag(evt) {
-    var scr_coord = get_event_coordinates(evt);
-    var nx = scr_coord[0] / drawfag.width  * wid;
-    var ny = scr_coord[1] / drawfag.height * hei;
+function check_click(evt) {
+    if ( mouse_button_is_down ) {
+        var scr_coord = get_event_coordinates(evt);
+        var nx = scr_coord[0] / drawfag.width  * wid;
+        var ny = scr_coord[1] / drawfag.height * hei;
 
-    nx = Math.floor(nx);
-    ny = Math.floor(ny);
+        nx = Math.floor(nx);
+        ny = Math.floor(ny);
 
+        mark_drawfag(nx, ny);
+
+        evt.preventDefault();
+    }
+}
+
+function mark_drawfag(nx, ny) {
     if ( draw[nx][ny] == 0 ) {
         draw[nx][ny] = 1;
         console.log("draw["+nx+"]["+ny+"] = 1");
@@ -169,8 +178,6 @@ function click_drawfag(evt) {
         update_drawfag();
         update_showfag();
     }
-    
-    evt.preventDefault();
 }
 
 function set_curve_overlay(evt) {
@@ -215,11 +222,12 @@ clear_values();
 update_drawfag();
 update_showfag();
 
-drawfag.addEventListener('click', click_drawfag, false);
 drawfag.addEventListener('mouseout', unset_curve_overlay, false);
-drawfag.addEventListener('mousemove', set_curve_overlay, false);
+drawfag.addEventListener('mousemove', function (e) { set_curve_overlay(e); check_click(e); }, false);
 showfag.addEventListener('mouseout', unset_line_overlay, false);
 showfag.addEventListener('mousemove', set_line_overlay, false);
+document.addEventListener('mousedown', function (e) { mouse_button_is_down = true; check_click(e); }, false);
+document.addEventListener('mouseup', function (e) { mouse_button_is_down = false; }, false);
 
 </script>
 
