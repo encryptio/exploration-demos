@@ -139,7 +139,10 @@ function update_showcanvas() {
 }
 
 function get_event_coordinates(evt) {
-    if ( evt.offsetX ) {
+    if ( evt.pageX && evt.target && evt.target.offsetLeft ) {
+        var p = evt.target;
+        return [evt.pageX - p.offsetLeft, evt.pageY - p.offsetTop];
+    } else if ( evt.offsetX ) {
         return [evt.offsetX, evt.offsetY];
     } else if ( evt.layerX ) {
         return [evt.layerX, evt.layerY];
